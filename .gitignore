@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Vue / Node
+node_modules/
+dist/
+
+# IDE
+.vscode/
+.idea/
+
+# Environment
+.env
+
+# docs
+*.pdf
+*.ppt
+*.pptx
+*.doc
+*.docx
