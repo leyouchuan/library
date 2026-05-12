@@ -21,3 +21,5 @@ dist/
 *.pptx
 *.doc
 *.docx
+
+*.env
