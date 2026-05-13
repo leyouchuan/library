@@ -3,8 +3,10 @@ from sqlalchemy import select, and_
 from tables import Admin, Book, LibraryCard, BorrowRecord, Base
 from connect import SessionLocal, engine
 
-# 建表
-def init_db():
+# 建表 drop if exists
+def init_db(drop=False):
+    if drop:
+        Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
 
 
