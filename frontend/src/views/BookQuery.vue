@@ -1,6 +1,13 @@
 <template>
   <div>
-    <h2>图书查询</h2>
+    <div class="header-bar">
+      <h2>图书查询</h2>
+      <div class="header-actions">
+        <!-- 如果是公开访问模式，显示返回登录按钮 -->
+        <router-link v-if="isPublic" to="/login" class="btn-back">返回登录</router-link>
+      </div>
+    </div>
+
     <div class="search-form">
       <input v-model="form.category" placeholder="类别" />
       <input v-model="form.title" placeholder="书名" />
@@ -42,8 +49,11 @@
 </template>
 
 <script setup>
-import { reactive, ref } from 'vue'
+import { reactive, ref, computed } from 'vue'
+import { useRoute } from 'vue-router'
 import { queryBooks } from '../api/books'
+
+const route = useRoute()
 
 const form = reactive({
   category: '', title: '', publisher: '', author: '',
@@ -52,6 +62,9 @@ const form = reactive({
 })
 const books = ref([])
 const searched = ref(false)
+
+// 判断是否是公开访问模式（路径为 /books）
+const isPublic = computed(() => route.path === '/books')
 
 function clean(obj) {
   const result = {}
@@ -74,16 +87,87 @@ function reset() {
 </script>
 
 <style scoped>
-h2 { margin-bottom: 20px; }
-.search-form { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
-.search-form input, .search-form select {
-  padding: 8px; border: 1px solid #ddd; border-radius: 4px; width: 140px;
+.header-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
 }
-button { padding: 8px 18px; background: #409eff; color: white; border: none; border-radius: 4px; cursor: pointer; }
-.btn-reset { background: #909399; }
-table { width: 100%; border-collapse: collapse; background: white; }
-th, td { border: 1px solid #eee; padding: 10px 12px; text-align: left; font-size: 14px; }
-th { background: #f2f6fc; }
-tr:hover { background: #f9fafc; }
-.empty { color: #909399; margin-top: 20px; }
+
+.header-bar h2 {
+  margin: 0;
+}
+
+.header-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-back {
+  display: inline-block;
+  padding: 8px 18px;
+  background: #376bd1;
+  color: white;
+  border-radius: 4px;
+  text-decoration: none;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.btn-back:hover {
+  background: #2654c0;
+}
+
+.search-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.search-form input, .search-form select {
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  width: 140px;
+}
+
+button {
+  padding: 8px 18px;
+  background: #409eff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn-reset {
+  background: #909399;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+}
+
+th, td {
+  border: 1px solid #eee;
+  padding: 10px 12px;
+  text-align: left;
+  font-size: 14px;
+}
+
+th {
+  background: #f2f6fc;
+}
+
+tr:hover {
+  background: #f9fafc;
+}
+
+.empty {
+  color: #909399;
+  margin-top: 20px;
+}
 </style>

@@ -6,7 +6,8 @@ from typing import Optional
 from function import (
     admin_login, add_book, batch_add_books, query_books,
     add_library_card, delete_library_card,
-    borrow_book, return_book, list_borrowed_books
+    borrow_book, return_book, list_borrowed_books,
+    user_login, get_user_info, update_user_info, get_user_borrow_history
 )
 
 app = FastAPI()
@@ -148,13 +149,47 @@ def ret(req: ReturnReq):
 @app.get("/borrowed/{card_no}")
 def borrowed(card_no: str):
     records = list_borrowed_books(card_no)
-    return [
-        {
-            "id": r.id,
-            "book_no": r.book_no,
-            "card_no": r.card_no,
-            "borrow_time": str(r.borrow_time),
-            "return_time": str(r.return_time) if r.return_time else None,
+    return records
+
+class UserLoginReq(BaseModel):
+    card_no: str
+    password: str  # 改为密码
+
+@app.post("/user/login")
+def user_login_api(req: UserLoginReq):
+    ok, result = user_login(req.card_no, req.password)
+    if ok:
+        return {
+            "success": True, 
+            "user": {
+                "card_no": result.card_no,
+                "name": result.name,
+                "unit": result.unit,
+                "category": result.category
+            }
         }
-        for r in records
-    ]
+    return {"success": False, "message": result}
+# ========== 获取用户信息 ==========
+@app.get("/user/{card_no}")
+def get_user(card_no: str):
+    user = get_user_info(card_no)
+    if not user:
+        return {"success": False, "message": "用户不存在"}
+    return {"success": True, "user": user}
+
+# ========== 更新用户信息 ==========
+class UpdateUserReq(BaseModel):
+    name: Optional[str] = None
+    unit: Optional[str] = None
+    category: Optional[str] = None
+
+@app.put("/user/{card_no}")
+def update_user(card_no: str, req: UpdateUserReq):
+    ok, msg = update_user_info(card_no, req.name, req.unit, req.category)
+    return {"success": ok, "message": msg}
+
+# ========== 查询用户借书历史 ==========
+@app.get("/user/{card_no}/history")
+def get_history(card_no: str, include_returned: bool = False):
+    records = get_user_borrow_history(card_no, include_returned)
+    return records

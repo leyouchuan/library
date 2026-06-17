@@ -59,6 +59,7 @@ def init_data():
     if not db.query(LibraryCard).filter_by(card_no="C001").first():
         db.add(LibraryCard(
             card_no="C001",
+            password="123456",
             name="张三",
             unit="计算机学院",
             category="学生",

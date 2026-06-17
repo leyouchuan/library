@@ -34,6 +34,7 @@ class LibraryCard(Base):
     __tablename__ = "library_cards"
 
     card_no = Column(String(50), primary_key=True)       # 借书证号
+    password = Column(String(255), nullable=False, default="123456") #密码
     name = Column(String(100), nullable=False)           # 姓名
     unit = Column(String(200), nullable=True)            # 单位
     category = Column(String(50), nullable=False)        # 类别（教师/学生等）
