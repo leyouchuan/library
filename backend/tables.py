@@ -11,7 +11,7 @@ class Admin(Base):
     __tablename__ = "admins"
 
     admin_id = Column(String(50), primary_key=True)   # 管理员ID
-    password = Column(String(255), nullable=False)     # 密码（建议存哈希）
+    password = Column(String(255), nullable=False)     # 密码
     name = Column(String(100), nullable=False)        # 姓名
     contact = Column(String(100), nullable=True)      # 联系方式
 
@@ -37,7 +37,7 @@ class LibraryCard(Base):
     password = Column(String(255), nullable=False, default="123456") #密码
     name = Column(String(100), nullable=False)           # 姓名
     unit = Column(String(200), nullable=True)            # 单位
-    category = Column(String(50), nullable=False)        # 类别（教师/学生等）
+    category = Column(String(50), nullable=False)        # 类别
     is_active = Column(Boolean, nullable=False, default=True)  # 是否有效
 
 

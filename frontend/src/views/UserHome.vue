@@ -22,7 +22,10 @@
             {{ user.is_active ? '有效' : '已失效' }}
           </span></div>
         </div>
-        <button @click="showEdit = !showEdit">修改信息</button>
+        <div class="action-buttons">
+          <button v-if="user.is_active" @click="showEdit = !showEdit">修改信息</button>
+          <button v-else class="btn-restore" @click="restoreUserCard(user.card_no)">恢复借书证</button>
+        </div>
       </div>
 
       <!-- 修改信息 -->
@@ -38,12 +41,8 @@
             <input v-model="editForm.unit" placeholder="请输入单位" />
           </div>
           <div class="form-group">
-            <label>类别</label>
-            <select v-model="editForm.category">
-              <option value="学生">学生</option>
-              <option value="教师">教师</option>
-              <option value="其他">其他</option>
-            </select>
+            <label>新密码</label>
+            <input v-model="editForm.password" type="password" placeholder="留空则不修改密码" />
           </div>
         </div>
         <div class="form-actions">
@@ -104,6 +103,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { getUserInfo, updateUserInfo, getUserHistory } from '../api/user'
+import { restoreCard } from '../api/cards'  // 新增导入
 
 const router = useRouter()
 const activeTab = ref('info')
@@ -117,10 +117,15 @@ const user = reactive({
 })
 
 const showEdit = ref(false)
-const editForm = reactive({ name: '', unit: '', category: '' })
+const editForm = reactive({ 
+  name: '', 
+  unit: '', 
+  password: ''
+})
 const updateMsg = reactive({ ok: false, text: '' })
 const history = ref([])
 const showReturned = ref(false)
+const restoreMsg = reactive({ ok: false, text: '' })
 
 async function loadUserInfo() {
   const userData = JSON.parse(localStorage.getItem('user') || '{}')
@@ -135,13 +140,12 @@ async function loadUserInfo() {
       Object.assign(user, res.user)
       editForm.name = user.name
       editForm.unit = user.unit || ''
-      editForm.category = user.category
+      editForm.password = ''
     } else {
       console.error('获取用户信息失败:', res.message)
     }
   } catch (error) {
     console.error('请求用户信息失败:', error)
-    // 如果请求失败，使用 localStorage 中的数据
     if (userData.name) {
       Object.assign(user, userData)
     }
@@ -169,19 +173,22 @@ async function updateInfo() {
   }
   
   try {
-    const res = await updateUserInfo(user.card_no, editForm)
+    const data = {}
+    if (editForm.name) data.name = editForm.name
+    if (editForm.unit) data.unit = editForm.unit
+    if (editForm.password) data.password = editForm.password
+    
+    const res = await updateUserInfo(user.card_no, data)
     updateMsg.ok = res.success
     updateMsg.text = res.message
     if (res.success) {
       user.name = editForm.name
       user.unit = editForm.unit
-      user.category = editForm.category
-      // 更新 localStorage
       const userData = JSON.parse(localStorage.getItem('user') || '{}')
       userData.name = editForm.name
       userData.unit = editForm.unit
-      userData.category = editForm.category
       localStorage.setItem('user', JSON.stringify(userData))
+      editForm.password = ''
       setTimeout(() => { 
         showEdit.value = false 
         updateMsg.text = ''
@@ -193,6 +200,35 @@ async function updateInfo() {
   }
 }
 
+async function restoreUserCard(cardNo) {
+  if (!cardNo) {
+    console.error('卡号为空')
+    return
+  }
+  
+  if (!confirm('确认要恢复该借书证吗？')) return
+  
+  restoreMsg.text = ''
+  try {
+    const res = await restoreCard(cardNo)  // 使用传入的卡号
+    if (res.success) {
+      restoreMsg.ok = true
+      restoreMsg.text = '借书证恢复成功！'
+      user.is_active = true
+      const userData = JSON.parse(localStorage.getItem('user') || '{}')
+      userData.is_active = true
+      localStorage.setItem('user', JSON.stringify(userData))
+      setTimeout(() => { restoreMsg.text = '' }, 3000)
+    } else {
+      restoreMsg.ok = false
+      restoreMsg.text = res.message || '恢复失败'
+    }
+  } catch (error) {
+    console.error('恢复请求失败:', error)
+    restoreMsg.ok = false
+    restoreMsg.text = '请求失败，请重试'
+  }
+}
 function logout() {
   localStorage.removeItem('user')
   router.push('/user-login')
@@ -203,6 +239,7 @@ onMounted(() => {
   loadHistory()
 })
 </script>
+
 
 <style scoped>
 /* 复用 Home.vue 的布局样式 */

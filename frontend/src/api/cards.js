@@ -7,3 +7,7 @@ export function addCard(data) {
 export function deleteCard(card_no) {
   return request.delete(`/cards/${card_no}`)
 }
+
+export function restoreCard(card_no) {
+  return request.post(`/cards/${card_no}/restore`)
+}

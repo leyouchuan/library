@@ -5,7 +5,7 @@ from typing import Optional
 
 from function import (
     admin_login, add_book, batch_add_books, query_books,
-    add_library_card, delete_library_card,
+    add_library_card, delete_library_card,restore_library_card,
     borrow_book, return_book, list_borrowed_books,
     user_login, get_user_info, update_user_info, get_user_borrow_history
 )
@@ -90,7 +90,7 @@ async def batch_books(file: UploadFile = File(...)):
     return {"success": True, "results": results, "errors": errors}
 
 
-# ========== 图书查询（支持全参数）==========
+# ========== 图书查询 ==========
 @app.get("/books")
 def get_books(
     category: Optional[str] = None,
@@ -153,7 +153,7 @@ def borrowed(card_no: str):
 
 class UserLoginReq(BaseModel):
     card_no: str
-    password: str  # 改为密码
+    password: str
 
 @app.post("/user/login")
 def user_login_api(req: UserLoginReq):
@@ -181,15 +181,22 @@ def get_user(card_no: str):
 class UpdateUserReq(BaseModel):
     name: Optional[str] = None
     unit: Optional[str] = None
-    category: Optional[str] = None
+    password: Optional[str] = None
 
 @app.put("/user/{card_no}")
 def update_user(card_no: str, req: UpdateUserReq):
-    ok, msg = update_user_info(card_no, req.name, req.unit, req.category)
+    ok, msg = update_user_info(card_no, req.name, req.unit, req.password)
     return {"success": ok, "message": msg}
+
 
 # ========== 查询用户借书历史 ==========
 @app.get("/user/{card_no}/history")
 def get_history(card_no: str, include_returned: bool = False):
     records = get_user_borrow_history(card_no, include_returned)
     return records
+
+# ========== 恢复借书证 ==========
+@app.post("/cards/{card_no}/restore")
+def restore_card(card_no: str):
+    ok, msg = restore_library_card(card_no)
+    return {"success": ok, "message": msg}

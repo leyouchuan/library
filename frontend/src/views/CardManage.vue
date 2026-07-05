@@ -28,17 +28,29 @@
       </div>
       <p :class="delMsg.ok ? 'success' : 'error'" v-if="delMsg.text">{{ delMsg.text }}</p>
     </div>
+
+    <!-- 新增：恢复借书证 -->
+    <div class="section">
+      <h3>恢复借书证</h3>
+      <div class="row">
+        <input v-model="restoreCardNo" placeholder="输入已失效的卡号" />
+        <button class="btn-restore" @click="submitRestore">恢复</button>
+      </div>
+      <p :class="restoreMsg.ok ? 'success' : 'error'" v-if="restoreMsg.text">{{ restoreMsg.text }}</p>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { reactive, ref } from 'vue'
-import { addCard, deleteCard } from '../api/cards'
+import { addCard, deleteCard, restoreCard } from '../api/cards'
 
 const form = reactive({ card_no: '', name: '', unit: '', category: '学生' })
 const addMsg = reactive({ ok: false, text: '' })
 const delCardNo = ref('')
 const delMsg = reactive({ ok: false, text: '' })
+const restoreCardNo = ref('')
+const restoreMsg = reactive({ ok: false, text: '' })
 
 async function submitAdd() {
   const res = await addCard({ ...form })
@@ -52,6 +64,18 @@ async function submitDel() {
   delMsg.ok = res.success
   delMsg.text = res.message
 }
+
+// 新增：恢复借书证
+async function submitRestore() {
+  if (!restoreCardNo.value) {
+    restoreMsg.ok = false
+    restoreMsg.text = '请输入卡号'
+    return
+  }
+  const res = await restoreCard(restoreCardNo.value)
+  restoreMsg.ok = res.success
+  restoreMsg.text = res.message
+}
 </script>
 
 <style scoped>
@@ -63,6 +87,9 @@ label { display: flex; flex-direction: column; font-size: 13px; gap: 4px; }
 input, select { padding: 7px; border: 1px solid #ddd; border-radius: 4px; }
 button { padding: 8px 20px; background: #409eff; color: white; border: none; border-radius: 4px; cursor: pointer; }
 .btn-del { background: #f56c6c; }
-.row { display: flex; gap: 10px; }
-.success { color: green; margin-top: 8px; } .error { color: red; margin-top: 8px; }
+.btn-restore { background: #e6a23c; }
+.btn-restore:hover { background: #ebb563; }
+.row { display: flex; gap: 10px; margin-bottom: 8px; }
+.success { color: green; margin-top: 8px; }
+.error { color: red; margin-top: 8px; }
 </style>

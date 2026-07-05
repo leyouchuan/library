@@ -53,7 +53,7 @@ def main():
     current_admin = None
 
     while True:
-        print("\n========== 图书管理系统 ==========")
+        print("\n 图书管理系统 ")
         print("1. 管理员登录")
         print("2. 图书入库")
         print("3. 批量入库")

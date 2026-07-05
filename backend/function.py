@@ -139,6 +139,18 @@ def delete_library_card(card_no):
         card = db.get(LibraryCard, card_no)
         if not card:
             return False, "借书证不存在"
+        
+        # 检查是否有未归还的图书
+        stmt = select(BorrowRecord).where(
+            and_(
+                BorrowRecord.card_no == card_no,
+                BorrowRecord.return_time.is_(None)
+            )
+        )
+        unpaid_records = db.execute(stmt).scalars().all()
+        if unpaid_records:
+            return False, f"该借书证有 {len(unpaid_records)} 本图书未归还，请先还书后再删除借书证"
+        
         card.is_active = False
         db.commit()
         return True, "借书证删除成功"
@@ -202,7 +214,7 @@ def borrow_book(card_no, book_no, admin_id):
             last_return = db.execute(stmt).first()
             return False, f"该书无库存，最近归还时间：{last_return[0] if last_return else '无'}"
 
-        # ===== 新增：检查该证是否已借该书且未归还 =====
+        # ===== 检查该证是否已借该书且未归还 =====
         existing_stmt = select(BorrowRecord).where(
             and_(
                 BorrowRecord.card_no == card_no,
@@ -253,7 +265,8 @@ def return_book(card_no, book_no):
 def user_login(card_no: str, password: str):
     with SessionLocal() as db:
         card = db.get(LibraryCard, card_no)
-        if card and card.is_active and card.password == password:
+        if card and card.password == password:
+        # if card and card.is_active and card.password == password:
             return True, card
         return False, "借书证号或密码错误"
 
@@ -272,7 +285,7 @@ def get_user_info(card_no: str):
         }
 
 # ========== 更新用户信息 ==========
-def update_user_info(card_no: str, name: str = None, unit: str = None, category: str = None):
+def update_user_info(card_no: str, name: str = None, unit: str = None, password: str = None):
     with SessionLocal() as db:
         card = db.get(LibraryCard, card_no)
         if not card:
@@ -284,13 +297,13 @@ def update_user_info(card_no: str, name: str = None, unit: str = None, category:
             card.name = name
         if unit is not None:
             card.unit = unit
-        if category is not None:
-            card.category = category
+        if password is not None:
+            card.password = password
             
         db.commit()
         return True, "用户信息更新成功"
 
-# ========== 查询用户借书历史（包含已归还的） ==========
+# ========== 查询用户借书历史  ==========
 def get_user_borrow_history(card_no: str, include_returned: bool = False):
     with SessionLocal() as db:
         stmt = select(
@@ -330,3 +343,16 @@ def get_user_borrow_history(card_no: str, include_returned: bool = False):
                 'return_time': row[9].strftime('%Y-%m-%d %H:%M:%S') if row[9] else None
             })
         return result
+    
+# ========== 恢复借书证 ==========
+def restore_library_card(card_no: str):
+    with SessionLocal() as db:
+        card = db.get(LibraryCard, card_no)
+        if not card:
+            return False, "借书证不存在"
+        if card.is_active:
+            return False, "借书证已是有效状态"
+        
+        card.is_active = True
+        db.commit()
+        return True, "借书证恢复成功"
